@@ -14,6 +14,17 @@ module.exports = app => {
   });
 
   app.get('/api/blogs', requireLogin, async (req, res) => {
+    const redis = require('redis');
+    const redisUrl = 'redis://127.0.0.1:6379';
+    const client = redis.createClient(redisUrl);
+    const util = require('util'); // std lib from the Node runtime. Will help us change nasty callback behavior into a Promise.
+    client.get = util.promisify(client.get); // pass a reference to the client.get function. Overwrites the existing function. Returns a PRomise.
+
+    // Do we have any cached data in redis related to this query?
+    const cachedBlogs = await client.get(req.user.id);
+    // If yes, then respond to the request right away and return.
+    // If no, we need to respond to request and update cache to store the data.
+
     const blogs = await Blog.find({ _user: req.user.id });
 
     res.send(blogs);
