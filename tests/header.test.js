@@ -1,4 +1,6 @@
 const puppeteer = require('puppeteer');
+const sessionFactory = require('./factories/sessionFactory');
+const userFactory = require('./factories/userFactory');
 
 let browser, page; // scoping the variables so they are accessible in each func
 
@@ -27,24 +29,12 @@ test('clicking login starts the oauth flow', async () => {
     expect(url).toMatch(/accounts\.google\.com/);
 })
 
-test.only('when signed in shows logout button', async () => {
-    const id = '61ba845cd63687174d1c9212'; // copied from MongoDB collection
+test('when signed in shows logout button', async () => {
+    // create a user and pass into session factory 
+    const user = await userFactory(); // wait for the user to be saved
+    const {session, sig } = sessionFactory(user);
     
-    const Buffer = require('safe-buffer').Buffer;
-    const sessionObject = {
-        passport: {
-            user: id
-        }
-    };
-    const sessionString = Buffer.from(JSON.stringify(sessionObject))
-        .toString('base64'); // sessionString will be the exact same session string as what we'd get using keygrip
-    
-    const Keygrip = require('keygrip');
-    const keys = require('../config/keys');
-    const keygrip = new Keygrip([keys.cookieKey]);
-    const sig = keygrip.sign('session=' + sessionString); // 'session=' is just what the keygrip library does. No other reason.
-    
-    await page.setCookie({ name: 'session', value: sessionString});
+    await page.setCookie({ name: 'session', value: session});
     await page.setCookie({ name: 'session.sig', value: sig});
     // Can get your cookie names in Chrome inspector --> application --> Cookies --> localhost:3000, and look under "Name" heading
 
