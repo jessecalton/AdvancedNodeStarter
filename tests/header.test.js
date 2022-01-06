@@ -1,19 +1,14 @@
-const puppeteer = require('puppeteer');
-const sessionFactory = require('./factories/sessionFactory');
-const userFactory = require('./factories/userFactory');
+const Page = require('./helpers/page'); // all Puppeteer stuff is encompassed here
 
-let browser, page; // scoping the variables so they are accessible in each func
+let page; // scoping the variables so they are accessible in each func
 
 beforeEach( async () => {
-    browser = await puppeteer.launch({
-        headless: false
-    });
-    page = await browser.newPage();
+    page = await Page.build();
     await page.goto('localhost:3000');
 })
 
 afterEach( async () => {
-    await browser.close();
+    await page.close();
 });
 
 test('the header has the correct text', async () => {
@@ -30,17 +25,8 @@ test('clicking login starts the oauth flow', async () => {
 })
 
 test('when signed in shows logout button', async () => {
-    // create a user and pass into session factory 
-    const user = await userFactory(); // wait for the user to be saved
-    const {session, sig } = sessionFactory(user);
+    await page.login();
     
-    await page.setCookie({ name: 'session', value: session});
-    await page.setCookie({ name: 'session.sig', value: sig});
-    // Can get your cookie names in Chrome inspector --> application --> Cookies --> localhost:3000, and look under "Name" heading
-
-    await page.goto('localhost:3000');
-    await page.waitFor('a[href="/auth/logout"]'); // test will fail if <a> tag never appears
-
     const text = await page.$eval('a[href="/auth/logout"]', el => el.innerHTML);
 
     expect(text).toEqual('Logout');
