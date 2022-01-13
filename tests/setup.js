@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 require('../models/User'); // now Mongoose will know what a User model is
 
 const mongoose = require('mongoose');

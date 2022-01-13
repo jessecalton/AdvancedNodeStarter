@@ -33,8 +33,12 @@ class CustomPage {
         await this.page.setCookie({ name: 'session.sig', value: sig});
         // Can get your cookie names in Chrome inspector --> application --> Cookies --> localhost:3000, and look under "Name" heading
 
-        await this.page.goto('localhost:3000');
+        await this.page.goto('localhost:3000/blogs');
         await this.page.waitFor('a[href="/auth/logout"]'); // test will fail if <a> tag never appears
+    }
+
+    async getContentsOf(selector) {
+        return this.page.$eval(selector, el => el.innerHTML);
     }
 }
 
